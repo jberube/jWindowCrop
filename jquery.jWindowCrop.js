@@ -154,6 +154,7 @@
 			base.dragImageCoords = {x: parseInt(base.$image.css('left')), y: parseInt(base.$image.css('top'))}
 		}
 		function handleDrag(event) {
+			event.preventDefault(); //some browsers do image dragging themselves
 			if(base.isDragging) {
 				var newLeft = fillContainer((base.dragImageCoords.x + event.distanceX), base.$image.width(), base.options.targetWidth);
 				var newTop = fillContainer((base.dragImageCoords.y + event.distanceY), base.$image.height(), base.options.targetHeight);
@@ -164,6 +165,8 @@
 		}
 		function handleDragEnd(event) {
 			base.isDragging = false;
+			storeFocalPoint();
+			updateResult();
 		}
 		function handleTransformStart(event) {
 			event.preventDefault(); //some browsers zoom on pinch gesture
@@ -172,6 +175,7 @@
 		}
 		function handleTransform(event) {
 			if(base.isZooming){
+				event.preventDefault(); //some browsers zoom on pinch gesture
 				var ratio = event.scale;//*base.workingPercent;
 				if(base.minPercent >= 1) {
 					ratio = base.minPercent;
