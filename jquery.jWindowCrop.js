@@ -1,8 +1,11 @@
 /*
- * jWindowCrop v1.0.0
+ * jTouchCrop
+ * Copyright (c) 2012 Mediaclip
  *
+ * based on jWindowCrop v1.0.0
  * Copyright (c) 2012 Tyler Brown
  * Licensed under the MIT license.
+ * https://github.com/tybro0103/jWindowCrop
  *
  */
 
@@ -13,19 +16,20 @@
 		return val;
 	}
 
-	$.jWindowCrop = function(image, options){
+	$.jTouchCrop = function(image, options){
 		var base = this;
 		base.$image = $(image); // target image jquery element
 		base.image = image; // target image dom element
-		base.$image.data("jWindowCrop", base); // target frame jquery element
+		base.$image.data("jTouchCrop", base); // target frame jquery element
 
-		base.namespace = 'jWindowCrop';
+		base.namespace = 'jTouchCrop';
 		base.originalWidth = 0;
 		base.isDragging = false;
+		base.isZooming = false;
 		
 		base.init = function(){
 			base.$image.css({display:'none'}); // hide image until loaded
-			base.options = $.extend({},$.jWindowCrop.defaultOptions, options);
+			base.options = $.extend({},$.jTouchCrop.defaultOptions, options);
 			if(base.options.zoomSteps < 2) base.options.zoomSteps = 2;
 
 			base.$image.addClass('jwc_image').wrap('<div class="jwc_frame" />'); // wrap image in frame
@@ -44,6 +48,15 @@
 			base.$image.on('mousedown.'+base.namespace, handleMouseDown);
 			$(document).on('mousemove.'+base.namespace, handleMouseMove);
 			$(document).on('mouseup.'+base.namespace, handleMouseUp);
+			
+			// handle touch events
+			base.$image.on('dragstart.'+base.namespace, handleDragStart);
+			base.$image.on('drag.'+base.namespace, handleDrag);
+			base.$image.on('dragend.'+base.namespace, handleDragEnd);
+
+			base.$image.on('transformstart.'+base.namespace, handleTransformStart);
+			base.$image.on('transform.'+base.namespace, handleTransform);
+			base.$image.on('transformend.'+base.namespace, handleTransformEnd);
 		};
 
 		base.setZoom = function(percent) {
@@ -106,6 +119,7 @@
 				cropY: Math.floor(parseInt(base.$image.css('top'))/base.workingPercent*-1),
 				cropW: Math.round(base.options.targetWidth/base.workingPercent),
 				cropH: Math.round(base.options.targetHeight/base.workingPercent),
+				cropZ: base.workingPercent,
 				mustStretch: (base.minPercent > 1)
 			};
 			base.options.onChange.call(base.image, base.result);
@@ -133,6 +147,54 @@
 				updateResult();
 			}
 		}
+		function handleDragStart(event) {
+			event.preventDefault(); //some browsers do image dragging themselves
+			base.isDragging = true;
+			base.dragMouseCoords = {x: event.pageX, y: event.pageY};
+			base.dragImageCoords = {x: parseInt(base.$image.css('left')), y: parseInt(base.$image.css('top'))}
+		}
+		function handleDrag(event) {
+			if(base.isDragging) {
+				var newLeft = fillContainer((base.dragImageCoords.x + event.distanceX), base.$image.width(), base.options.targetWidth);
+				var newTop = fillContainer((base.dragImageCoords.y + event.distanceY), base.$image.height(), base.options.targetHeight);
+				base.$image.css({'left' : (newLeft.toString()+'px'), 'top' : (newTop.toString()+'px')});
+				storeFocalPoint();
+				updateResult();
+			}		
+		}
+		function handleDragEnd(event) {
+			base.isDragging = false;
+		}
+		function handleTransformStart(event) {
+			event.preventDefault(); //some browsers zoom on pinch gesture
+			base.isZooming = true;
+			return false;
+		}
+		function handleTransform(event) {
+			if(base.isZooming){
+				var ratio = event.scale;//*base.workingPercent;
+				if(base.minPercent >= 1) {
+					ratio = base.minPercent;
+				} else if(ratio > 1.0) {
+					//ratio = 1;
+				} else if(ratio < base.minPercent) {
+					ratio = base.minPercent;	
+				}
+				
+				storeFocalPoint();
+				var newWidth = Math.ceil(base.originalWidth*ratio);
+				base.$image.width(newWidth);
+				base.workingPercent = 1/(base.originalWidth/newWidth);
+				focusOnCenter();
+				//base.focalPoint.x base.focalPoint.y
+								
+				updateResult();
+			}
+		}
+		function handleTransformEnd(event) {
+			base.isZooming = false;
+			//base.workingPercent = event.scale*base.workingPercent;
+		}
 		function handleMouseEnter() {
 			if(base.options.smartControls) base.$frame.find('.jwc_controls').fadeIn('fast');
 		}
@@ -143,7 +205,7 @@
 		base.init();
 	};
 	
-	$.jWindowCrop.defaultOptions = {
+	$.jTouchCrop.defaultOptions = {
 		targetWidth: 320,
 		targetHeight: 180,
 		zoomSteps: 10,
@@ -153,14 +215,14 @@
 		onChange: function() {}
 	};
 	
-	$.fn.jWindowCrop = function(options){
+	$.fn.jTouchCrop = function(options){
 		return this.each(function(){
-			(new $.jWindowCrop(this, options));
+			(new $.jTouchCrop(this, options));
 		});
 	};
 	
-	$.fn.getjWindowCrop = function(){
-		return this.data("jWindowCrop");
+	$.fn.getjTouchCrop = function(){
+		return this.data("jTouchCrop");
 	};
 })(jQuery);
 
