@@ -2,17 +2,15 @@ Description
 ===========
 Easy to use jQuery plugin for zoom & pan image cropping.
 
-Demo
-====
-Visit: http://www.tmatthew.net/jwindowcrop
+Works with touch events, all thanks to the folks you made hammer.js.
 
 Usage
 =====
 	// minimum
-	$('img.crop_me').jWindowCrop();
+	$('img.crop_me').jCropTouch();
 
 	// typical
-	$('img.crop_me').jWindowCrop({
+	$('img.crop_me').jCropTouch({
 		targetWidth:300,
 		targetHeight:300,
 		onChange: function(result) {
@@ -71,4 +69,4 @@ You then have access to all the properties and methods used for that specific el
 
 Questions
 =========
-Email tyler at tmatthew dot net
+Email julien.berube at gmail dot com
